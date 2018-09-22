@@ -90,7 +90,7 @@ class MattBot:
 
         # No priority set
         if self.priority == -1:
-            self.priority = self.speed_set_priority(game)
+            self.priority = self.early_game_priority(game)
 
         # Go to priority
         #    if in combat do nothing - finish the fight
