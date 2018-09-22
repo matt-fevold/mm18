@@ -41,7 +41,7 @@ class Logic:
         self.phase_0_queue = [ 3, 1, 0 ]
         self.kill_mode = KillMode.KILL_ALL
 
-        self.low_health_loop = [ 0, 1, 3]
+        self.low_health_loop = [ 0, 1, 0, 10, 6]
 
 
     def follow(self):
@@ -49,8 +49,8 @@ class Logic:
         them = self.game.get_opponent()
 
         self.log(f"Health: {me.health}")
-        self.log(f"Me - Dest: {me.destination} Stance: {me.stance} Flight Plan: {self.flight_plan}")
-        self.log(f"Them - Dest: {them.destination} Stance: {them.stance}")
+        self.log(f"Me - Dest: {me.location} Stance: {me.stance} Flight Plan: {self.flight_plan}")
+        self.log(f"Them - Dest: {them.location} Stance: {them.stance}")
 
         if self.flight_plan == None:
             # If first turn
@@ -139,7 +139,7 @@ class Logic:
                     return get_winning_stance(them.stance)
                 return random.choice(stances)
 
-        elif local_m is not None and not local_m.dead:
+        elif local_m is not None and not local_m.dead and them.location != me.location:
             return get_winning_stance(local_m.stance)
 
         elif them.stance in stances:
