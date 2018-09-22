@@ -251,7 +251,7 @@ class Game:
                 if min_dist == -1:
                     min_dist = distances[n]
 
-            if min_dist != -1 and distances[n] > min_dist:
+            if min_dist != -1 and distances[n] > min_dist or len(to_explore) == 0:
                 return ret
 
 
