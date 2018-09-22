@@ -38,14 +38,17 @@ class Logic:
         self.pathing_method = Pathing.LEAST_MONSTERS
 
         self.phase = 0
-        self.phase_0_queue = [ 3, 1, 0,  21 , 20, 13, 12, 0 ]
-        self.kill_mode = KillMode.KILL_TARGET
+        self.phase_0_queue = [ 3, 1, 0 ]
+        self.kill_mode = KillMode.KILL_ALL
+
+        self.low_health_loop = [ 0, 1, 3]
 
 
     def follow(self):
         me = self.game.get_self()
         them = self.game.get_opponent()
 
+        self.log(f"Health: {me.health}")
         self.log(f"Me - Dest: {me.destination} Stance: {me.stance} Flight Plan: {self.flight_plan}")
         self.log(f"Them - Dest: {them.destination} Stance: {them.stance}")
 
@@ -57,7 +60,10 @@ class Logic:
         else:
             self.log(f"Flight Plan: {self.flight_plan}")
             if len(self.flight_plan) == 0:
-                self.move()
+                if self.kill_mode == KillMode.KILL_ALL and self.game.has_monster(me.location) and not self.game.get_monster(me.location).dead:
+                    me.destination = me.location
+                else:
+                    self.move()
 
             elif len(self.flight_plan) == 1:
                 if self.flight_plan[0] == me.location:
@@ -83,7 +89,7 @@ class Logic:
                     # not there yet keep going, unless we are in kill all mode
 
                     if self.kill_mode == KillMode.KILL_ALL and self.game.has_monster(me.location) and not self.game.get_monster(me.location).dead:
-                        me.location = me.destination
+                        me.destination = me.location
 
                     else:
                         me.destination = self.flight_plan[0]
@@ -116,6 +122,8 @@ class Logic:
             local_m = self.game.get_monster(me.location)
         except:
             local_m = None
+
+
 
         # if we are about to move, change stance to monster at location
         if me.speed == me.movement_counter-1 and me.location != me.destination:
@@ -150,15 +158,21 @@ class Logic:
 
         health_mon = self.game.get_monster(0)
 
-        self.log(f"Respawn f{health_mon.respawn_counter}")
-        if me.location == 0 and (not health_mon.dead or (health_mon.dead and health_mon.respawn_counter < (10-me.speed))):
+
+        self.log(f"Respawn {health_mon.respawn_counter}")
+        if me.location == 0 and (not health_mon.dead or (health_mon.dead and health_mon.respawn_counter < (14-me.speed))):
             # don't leave if health alive
-            me.destination = me.location
+            me.destination = 0
+            self.flight_path = [ 0 ]
             return
 
+        if me.health < 40:
+            loc = self.low_health_loop.pop(0)
+            self.low_health_loop.append(loc)
+            target_node = loc
 
         # loop through targets to move to
-        if self.phase == 0:
+        elif self.phase == 0:
             if len(self.phase_0_queue) > 0:
                 target_node = self.phase_0_queue.pop(0)
 
@@ -187,7 +201,7 @@ class Logic:
                     target_node = lowest_health.location
                 else:
                     valid = []
-                    for n in [14, 9,8, 7]:
+                    for n in [16, 15, 0, 3, 1,  0, 16, 17, 0]:
                         if self.game.has_monster(n):
                             m = self.game.get_monster(n)
                             if not m.dead:
@@ -196,17 +210,7 @@ class Logic:
                     if len(valid) != 0:
                         target_node = random.choice(valid).location
                     else:
-                        # use secondary valid
-                        valid = []
-                        for n in [17, 15, 13]:
-                            if self.game.has_monster(n):
-                                m = self.game.get_monster(n)
-                                if not m.dead:
-                                    valid.append(m)
-                        if len(valid) != 0:
-                            target_node = random.choice(valid).location
-                        else:
-                            target_node = 0
+                        target_node = 0
 
 
         # calculate path to
